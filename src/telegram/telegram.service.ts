@@ -44,15 +44,17 @@ type WeatherData = {
   };
 };
 
+const messages = new Map<string, any>();
+const users = new Map<string, any>();
+const banedUser = new Map<string, any>();
+const forecast = new Map<string, any>();
+
 @Injectable()
 export class TelegramService {
   private bot;
   private chatId;
   private token;
-  private messages = new Map<string, any>();
-  private users = new Map<string, any>();
-  private banedUser = new Map<string, any>();
-  private forecast = new Map<string, any>();
+
   private weatherApikey = '0efeba1e4c191235ff83bc4199348682';
 
   constructor() {
@@ -61,15 +63,7 @@ export class TelegramService {
     this.chatId = process.env.CHANNEL_ID || '';
 
     this.bot.on('message', (msg) => {
-      this.messages.set(msg.message_id?.toString(), {
-        id: msg.message_id?.toString(),
-        text: msg.text,
-      });
-
-      this.users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
-        id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
-        name: msg.from?.first_name || 'unknown user',
-      });
+      this.updateStates(msg);
 
       this.bot.sendMessage(
         msg.chat.id,
@@ -184,7 +178,7 @@ export class TelegramService {
     const message = await this.generateMessage(weatherData);
 
     const date = format(new Date(), 'do, MMM y');
-    this.forecast.set(date, {
+    forecast.set(date, {
       date: new Date(),
       icon: weatherData?.weather?.at(0)?.icon,
       main: weatherData.weather.at(0)?.main,
@@ -199,9 +193,18 @@ export class TelegramService {
     await this.bot.getChatMemberCount(this.chatId);
   }
 
-  // async updateStates(msg: TelegramBot.Message) {
+  async updateStates(msg: TelegramBot.Message) {
+    messages.set(msg.message_id?.toString(), {
+      id: msg.message_id?.toString(),
+      text: msg.text,
+    });
 
-  // }
+    users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
+      id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
+      name: msg.from?.first_name || 'unknown user',
+    });
+    console.log(msg, 'UPDATE STATES log');
+  }
 
   async updateBot(token: string, chatId: string) {
     console.log('Update bot');
@@ -220,10 +223,10 @@ export class TelegramService {
     }
 
     if (this.chatId !== chatId) {
-      this.messages.clear();
+      messages.clear();
       // this.users.clear();
       // this.banedUser.clear();
-      this.forecast.clear();
+      forecast.clear();
     }
     this.token = token;
     this.chatId = chatId;
@@ -240,15 +243,7 @@ export class TelegramService {
     }
 
     this.bot.on('message', (msg) => {
-      this.messages.set(msg.message_id?.toString(), {
-        id: msg.message_id?.toString(),
-        text: msg.text,
-      });
-
-      this.users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
-        id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
-        name: msg.from?.first_name || 'unknown user',
-      });
+      this.updateStates(msg);
 
       this.bot.sendMessage(
         msg.chat.id,
@@ -291,34 +286,34 @@ export class TelegramService {
 
   async getAllMessages() {
     return {
-      data: Array.from(this.messages.values()),
+      data: Array.from(messages.values()),
     };
   }
 
   async getAllUsers() {
     return {
-      data: Array.from(this.users.values()),
+      data: Array.from(users.values()),
     };
   }
 
   async getAllForcasts() {
     return {
-      data: Array.from(this.forecast.values()),
+      data: Array.from(forecast.values()),
     };
   }
 
   async getBannedUsers() {
     return {
-      data: Array.from(this.banedUser.values()),
+      data: Array.from(banedUser.values()),
     };
   }
 
   async banUser(userId: number) {
     try {
       await this.bot.banChatMember(this.chatId, userId);
-      const user = this.users.get(userId?.toString());
-      this.users.delete(userId?.toString());
-      this.banedUser.set(userId?.toString(), user);
+      const user = users.get(userId?.toString());
+      users.delete(userId?.toString());
+      banedUser.set(userId?.toString(), user);
 
       return {
         message: 'User banned',
@@ -331,9 +326,9 @@ export class TelegramService {
 
   async unBanUser(userId: number) {
     await this.bot.unbanChatMember(this.chatId, userId);
-    const user = this.banedUser.get(userId?.toString());
-    this.banedUser.delete(userId?.toString());
-    this.users.set(userId?.toString(), user);
+    const user = banedUser.get(userId?.toString());
+    banedUser.delete(userId?.toString());
+    users.set(userId?.toString(), user);
 
     return {
       message: 'User unbanned',
@@ -350,15 +345,7 @@ export class TelegramService {
 
     // this.bot
     this.bot.on('message', (msg) => {
-      this.messages.set(msg.message_id?.toString(), {
-        id: msg.message_id?.toString(),
-        text: msg.text,
-      });
-
-      this.users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
-        id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
-        name: msg.from?.first_name || 'unknown user',
-      });
+      this.updateStates(msg);
 
       this.bot.sendMessage(
         msg.chat.id,
