@@ -10,7 +10,7 @@ export class CronService implements OnModuleInit {
     console.log('CronService has been initialized!');
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async sendDailyMessage() {
     console.log('Sending daily message...');
 
