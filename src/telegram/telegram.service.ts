@@ -201,7 +201,7 @@ export class TelegramService {
       id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
       name: msg.from?.first_name || 'unknown user',
     });
-    console.log(msg);
+    console.log(msg, 'UPDATE STATES log');
   }
 
   async updateBot(token: string, chatId: string) {
