@@ -61,7 +61,15 @@ export class TelegramService {
     this.chatId = process.env.CHANNEL_ID || '';
 
     this.bot.on('message', (msg) => {
-      this.updateStates(msg);
+      this.messages.set(msg.message_id?.toString(), {
+        id: msg.message_id?.toString(),
+        text: msg.text,
+      });
+
+      this.users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
+        id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
+        name: msg.from?.first_name || 'unknown user',
+      });
 
       this.bot.sendMessage(
         msg.chat.id,
@@ -191,18 +199,9 @@ export class TelegramService {
     await this.bot.getChatMemberCount(this.chatId);
   }
 
-  async updateStates(msg: TelegramBot.Message) {
-    this.messages.set(msg.message_id?.toString(), {
-      id: msg.message_id?.toString(),
-      text: msg.text,
-    });
+  // async updateStates(msg: TelegramBot.Message) {
 
-    this.users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
-      id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
-      name: msg.from?.first_name || 'unknown user',
-    });
-    console.log(msg, 'UPDATE STATES log');
-  }
+  // }
 
   async updateBot(token: string, chatId: string) {
     console.log('Update bot');
@@ -241,7 +240,15 @@ export class TelegramService {
     }
 
     this.bot.on('message', (msg) => {
-      this.updateStates(msg);
+      this.messages.set(msg.message_id?.toString(), {
+        id: msg.message_id?.toString(),
+        text: msg.text,
+      });
+
+      this.users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
+        id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
+        name: msg.from?.first_name || 'unknown user',
+      });
 
       this.bot.sendMessage(
         msg.chat.id,
@@ -343,7 +350,15 @@ export class TelegramService {
 
     // this.bot
     this.bot.on('message', (msg) => {
-      this.updateStates(msg);
+      this.messages.set(msg.message_id?.toString(), {
+        id: msg.message_id?.toString(),
+        text: msg.text,
+      });
+
+      this.users.set(msg?.from?.id?.toString() || `unknown_${uuidv4()}`, {
+        id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
+        name: msg.from?.first_name || 'unknown user',
+      });
 
       this.bot.sendMessage(
         msg.chat.id,
