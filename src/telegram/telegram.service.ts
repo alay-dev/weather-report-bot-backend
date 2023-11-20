@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import TelegramBot = require('node-telegram-bot-api');
-// import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from 'canvas';
 import { format } from 'date-fns';
 
 type WeatherData = {
@@ -79,66 +79,66 @@ export class TelegramService {
     return data;
   }
 
-  // async generateImage(data: WeatherData) {
-  //   const icon = data.weather.at(0)?.icon;
-  //   const temp = Math.round(data.main.temp);
-  //   const weatherType = data.weather.at(0)?.main || '';
-  //   const date = format(new Date(), 'do, MMM y');
+  async generateImage(data: WeatherData) {
+    const icon = data.weather.at(0)?.icon;
+    const temp = Math.round(data.main.temp);
+    const weatherType = data.weather.at(0)?.main || '';
+    const date = format(new Date(), 'do, MMM y');
 
-  //   let tagline = '';
+    let tagline = '';
 
-  //   if (weatherType === 'Thunderstorm')
-  //     tagline = 'Thunder Roars, Nature Applause!';
-  //   else if (
-  //     weatherType === 'Mist' ||
-  //     weatherType === 'Fog' ||
-  //     weatherType === 'Haze'
-  //   )
-  //     tagline = 'Lost in the Fog, Find Your Inner Peace.';
-  //   else if (weatherType === 'Snow')
-  //     tagline = 'Snowflakes Falling, Blanket of Silence!';
-  //   else if (weatherType === 'Rain')
-  //     tagline = 'Raindrops Keep Falling, Spirits Keep Rising!';
-  //   else if (weatherType === 'Clear')
-  //     tagline = 'Sunshine All the Way, Enjoy the Rays Today!';
-  //   else if (weatherType === 'Drizzle')
-  //     tagline = "A Blend of Sun and Clouds, Nature's Art Show!";
+    if (weatherType === 'Thunderstorm')
+      tagline = 'Thunder Roars, Nature Applause!';
+    else if (
+      weatherType === 'Mist' ||
+      weatherType === 'Fog' ||
+      weatherType === 'Haze'
+    )
+      tagline = 'Lost in the Fog, Find Your Inner Peace.';
+    else if (weatherType === 'Snow')
+      tagline = 'Snowflakes Falling, Blanket of Silence!';
+    else if (weatherType === 'Rain')
+      tagline = 'Raindrops Keep Falling, Spirits Keep Rising!';
+    else if (weatherType === 'Clear')
+      tagline = 'Sunshine All the Way, Enjoy the Rays Today!';
+    else if (weatherType === 'Drizzle')
+      tagline = "A Blend of Sun and Clouds, Nature's Art Show!";
 
-  //   const imageUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
-  //   const canvas = createCanvas(400, 200);
-  //   const ctx = canvas.getContext('2d');
+    const imageUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+    const canvas = createCanvas(400, 200);
+    const ctx = canvas.getContext('2d');
 
-  //   ctx.fillStyle = '#4527A0';
-  //   ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#4527A0';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  //   const img = await loadImage(imageUrl);
-  //   ctx.drawImage(img, 10, 10, 90, 90);
-  //   ctx.font = '16px Roboto';
-  //   ctx.fillStyle = '#fff';
-  //   ctx.fillText(weatherType, 40, 100);
+    const img = await loadImage(imageUrl);
+    ctx.drawImage(img, 10, 10, 90, 90);
+    ctx.font = '16px Roboto';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(weatherType, 40, 100);
 
-  //   ctx.fillStyle = '#fff';
-  //   ctx.font = '16px Roboto';
-  //   ctx.fillText(date, 280, 30);
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px Roboto';
+    ctx.fillText(date, 280, 30);
 
-  //   ctx.font = 'bold 40px Roboto';
-  //   ctx.fillText(temp?.toString(), 250, 90);
-  //   ctx.font = '14px Roboto';
-  //   ctx.fillText('° c', 294, 74);
+    ctx.font = 'bold 40px Roboto';
+    ctx.fillText(temp?.toString(), 250, 90);
+    ctx.font = '14px Roboto';
+    ctx.fillText('° c', 294, 74);
 
-  //   ctx.font = '13px Roboto';
-  //   ctx.fillText(
-  //     `${data.main.temp_max}° c / ${data.main.temp_min}° c`,
-  //     230,
-  //     110,
-  //   );
+    ctx.font = '13px Roboto';
+    ctx.fillText(
+      `${data.main.temp_max}° c / ${data.main.temp_min}° c`,
+      230,
+      110,
+    );
 
-  //   ctx.font = '15px Roboto';
-  //   ctx.fillText(tagline, 20, 160);
+    ctx.font = '15px Roboto';
+    ctx.fillText(tagline, 20, 160);
 
-  //   const buffer = canvas.toBuffer('image/png');
-  //   return buffer;
-  // }
+    const buffer = canvas.toBuffer('image/png');
+    return buffer;
+  }
 
   async generateMessage(data: WeatherData) {
     const temp = Math.round(data.main.temp);
@@ -175,7 +175,8 @@ export class TelegramService {
 
   async sendMessage() {
     const weatherData = await this.fetchWeatherData();
-    const message = await this.generateMessage(weatherData);
+    // const message = await this.generateMessage(weatherData);
+    const imageBuffer = await this.generateImage(weatherData);
 
     const date = format(new Date(), 'do, MMM y');
     forecast.set(date, {
@@ -186,11 +187,13 @@ export class TelegramService {
       tempMin: weatherData?.main?.temp_min,
     });
 
-    await this.bot.sendMessage(this.chatId, message);
+    // await this.bot.sendMessage(this.chatId, message);
+    await this.bot.sendPhoto(this.chatId, imageBuffer);
   }
 
-  async getUser() {
-    await this.bot.getChatMemberCount(this.chatId);
+  async getUser(userId: number) {
+    const data = await this.bot.getChatMember(this.chatId, userId);
+    return { data: data };
   }
 
   async updateStates(msg: TelegramBot.Message) {
@@ -203,7 +206,6 @@ export class TelegramService {
       id: msg?.from?.id?.toString() || `unknown_${uuidv4()}`,
       name: msg.from?.first_name || 'unknown user',
     });
-    console.log(msg, 'UPDATE STATES log');
   }
 
   async updateBot(token: string, chatId: string) {
@@ -213,14 +215,14 @@ export class TelegramService {
     }
     let chatData: TelegramBot.Chat;
 
-    try {
-      chatData = await this.bot.getChat(chatId);
-    } catch (err) {
-      console.log(err.response.body.description, chatId);
-      if (err.response.body.description === 'Bad Request: chat not found') {
-        throw new BadRequestException('Invalid Channel ID');
-      }
-    }
+    // try {
+    //   chatData = await this.bot.getChat(chatId);
+    // } catch (err) {
+    //   console.log(err.response.body.description, chatId);
+    //   if (err.response.body.description === 'Bad Request: chat not found') {
+    //     throw new BadRequestException('Invalid Channel ID');
+    //   }
+    // }
 
     if (this.chatId !== chatId) {
       messages.clear();
@@ -232,9 +234,9 @@ export class TelegramService {
     this.chatId = chatId;
 
     try {
-      const _bot = new TelegramBot(token, { polling: true });
       await this.bot.removeAllListeners();
       await this.bot.stopPolling();
+      const _bot = new TelegramBot(token, { polling: true });
 
       this.bot = _bot;
     } catch (err) {
@@ -250,7 +252,7 @@ export class TelegramService {
         `Please join to ${chatData?.invite_link}`,
       );
     });
-
+    console.log(chatId);
     this.chatId = chatId;
 
     return { message: 'Successfully updated bot settings' };

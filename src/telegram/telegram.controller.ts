@@ -1,4 +1,12 @@
-import { Body, Controller, Put, Get, Post, HttpCode } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Put,
+  Get,
+  Post,
+  HttpCode,
+  Param,
+} from '@nestjs/common';
 import { TelegramService } from './telegram.service';
 import { UpdateBotDto } from './dto/update-bot.dto';
 import { BanUserDto } from './dto/ban-user.dto';
@@ -32,9 +40,9 @@ export class TelegramController {
     return this.telegramService.getAllForcasts();
   }
 
-  @Get('get_member_count')
-  getChat() {
-    return this.telegramService.getChatMemberCount();
+  @Get('get_user/:id')
+  getChatUser(@Param() params: { id: number }) {
+    return this.telegramService.getUser(params?.id);
   }
 
   @Put()
